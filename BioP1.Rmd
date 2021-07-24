@@ -1,0 +1,759 @@
+---
+title: "Lab1"
+author: "Yulian Volianskiy"
+date: "25 03 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+2. Реализовать генератор рюкзачных векторов. Веса предметов в рюкзачном векторе должны выбираться случайно (линейное распределение), в диапазоне от 1 до amax (диапазон значений amax и длина вектора n определяются номером варианта).
+
+```{r}
+
+library(pracma)
+
+
+amax = as.integer(2 ** (24/1.4))
+
+v <- randi(c(1, amax), m = 25)
+
+
+gen_KS_v <- function(amax, n) {
+  v <- randi(c(1, amax), m = n)
+  return(v)
+}
+
+
+```
+
+
+```{r}
+
+q <- intToBits(2 ** (24) - 1)
+q
+
+```
+
+```{r}
+
+
+nonRepeatingRand <- function(top, count){
+  #diff = randi(top - 1, 1, count)
+  
+  result <- c()
+  amnt <- 0
+  i <- 0
+  
+  while (i < count) {
+    
+    i <- i + 1
+    flag <- FALSE
+    diff <- randi(top - 1, 1, 1)
+    #cat("Diff", diff, "\n")
+    amnt <- length(result)
+    
+    if(amnt != 0){
+      
+      for(k in 1:amnt){
+      
+        if(result[k] == diff){
+          #cat("I = ", i)
+          i <- i - 1
+          #cat("I2 = ", i, "\n")
+          flag <- TRUE
+          break
+        }
+      
+      }
+    }
+    
+    if(flag == FALSE){
+      
+      result <- c(result, diff)
+      #cat("I = ", i, "\n")
+    
+    }
+    
+    
+  }
+  
+  #for(i in 1:count){
+    #}
+  
+  #result = rem(cumsum(diff) + randi(1, 1, count) - 1, top) + 1
+  
+  return(result)
+}
+
+for(i in 1:10){
+  
+  print(nonRepeatingRand(20, 9))
+  
+}
+
+```
+
+
+
+3. Реализовать генератор задач о рюкзаке. Экземпляр задачи о рюзкаке состоит из рюзкачного вектора и целевого веса. Необходимо обеспечить, чтобы у каждой решаемой задачи было, по меньшей мере, одно решение. Для этого выбрать произвольным образом несколько предметов (доля от общего числа предметов определяется номером варианта). Принять целевой вес равным сумме весов этих предметов. Рюкзачный вектор сформировать при помощи генератора из п. 2. Для каждого значения amax сформировать не менее 50 (желательно, 100 и более) экземпляров задачи о рюкзаке.
+Сформированные экземпляры задачи занести в таблицу
+
+
+```{r}
+
+library("sets")
+library("zeallot")
+
+
+choose_Th <- function(v_c, per){
+  am <- randi(c(length(v_c) * ((per/100)-(4/100)), length(v_c) * ((per/100)+(4/100))), m = 1)
+  #print(am)
+  
+  vec <- c()
+  sum <- 0
+  
+  #for(i in 1:am){
+  num <- nonRepeatingRand(length(v_c), am)
+  
+  print(num)
+  
+  
+  for(i in 1:am){
+      vec <- c(vec, v_c[num[i]])
+      sum = sum + v_c[num[i]]
+  }
+  
+  cat("Vec: ", vec, "\n")
+  MArray = c(sum, vec)
+  return(MArray)  
+}
+
+namesK <- c("Номер вектора", "Номер задачи","amax", "Целевой вес")
+dfP <- data.frame()
+dfV <- matrix(, nrow = 0, ncol = 24)
+
+
+gen_Problem <- function(){
+  
+  k <- 1
+  for(i in seq(from=0.8, to=1.4, by=0.1))
+  {
+    
+    amax <- 2 ** (24/i)
+    v <- gen_KS_v(amax, 24)
+    dfV <- rbind(dfV, v)
+    
+    for(j in 1:50){
+      
+      WnV <- choose_Th(v, 50)
+      rw <- c((i - 0.8 + 0.1)*10, k, amax, WnV[1])
+      #print(rw)
+      dfP <- rbind(dfP, rw)
+      #print(j)
+      k <- k + 1
+    }
+  }
+  return(list(dfV, dfP))
+}
+
+df1 <- data.frame()
+df2 <- data.frame()
+
+c(df1, df2) %<-% gen_Problem()
+
+names(df2) <- namesK
+df2
+df1
+#gen_Problem()
+
+```
+
+```{r}
+
+for(i in 1:10){
+  
+  print(nonRepeatingRand(20, 9))
+  
+}
+
+```
+
+
+Для каждого сгенерированного экземпляра задачи:
+4. Решить задачу методом полного перебора вариантов. В ходе решения, заполнить таблицу:
+
+4.1 Генерируем все возможные случаи сборки рюкзака:
+
+```{r}
+
+x <- c(0, 1)
+library(gtools)
+
+setwd("E:/prazia/univer/БИОАлг/Лабы")
+#setwd("E:/prazia/VS_PY/BioALg/BioALg")
+write.csv(df1,"Vectors5.csv", row.names = FALSE)
+write.csv(df2,"Problems550.csv", row.names = FALSE)
+#p <- permutations(n=2,r=24,v=x, repeats.allowed=T)
+
+#print(head(p, 200))
+
+```
+
+```{r}
+library(gtools)
+library(pracma)
+library("sets")
+library("zeallot")
+```
+
+
+4.2 Решение задачи
+```{r}
+
+knapsack <- function(v_c, w, n){
+  
+  vec_S <- c()
+  flag <- FALSE
+  time.taken2 <- 0
+  
+  start.time2 <- Sys.time()
+  
+  for(k in 0:((2**n)-1)){
+      
+    q <- intToBits(k)
+    sum <- 0
+    
+    for(j in 1:24){
+      
+      if(q[j] == 1){
+        
+        sum <- sum + v_c[j]
+        
+      }
+      
+    }
+    
+    if( sum == w){
+      #print(k)  
+      if(flag == FALSE){
+        flag <- TRUE
+        end.time2 <- Sys.time()
+        time.taken2 <- end.time2 - start.time2
+        
+        
+      }
+      vec_S <- rbind(vec_S, k)
+      #break
+        
+    }  
+    
+  }
+  
+  return(list(vec_S, time.taken2))
+}
+
+#cat("L = ", , "\n")
+
+ln = length(df2[,1])
+
+k <- 1
+
+ans <- 0
+tm1 <- 0
+
+dfSBF <- data.frame()
+namesSBF <- c("Номер задачи", "Номер вектора", "Время нахождения первого решения", "Время нахождения всех решений", "Число решений")
+
+for( i in 1:ln){
+  
+  start.time <- Sys.time()
+  num2 <- df2["Номер вектора"][,1][i]
+  print(num2)
+  #k <- num2
+  #print(class(num2))
+  w <- df2["Целевой вес"][,1][i]
+  vectr <- df1[k,]
+  #print(df1[k,])
+  
+  if( mod(i, 50) == 0){
+    k <- k + 1
+  }
+  #cat("Num = ", num, " W = ", w, " V: ", vectr, "\n")
+  
+  c(ans, tm1) %<-% knapsack(vectr, w, 24)
+  
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  time.taken
+  
+  rw2 <- c(i, k, tm1, time.taken, length(ans))
+  dfSBF <- rbind(dfSBF, rw2)
+  
+  #cat("Time = ", time.taken, " Ans: ", ans, " Tm1 = ", tm1, "\n")
+  
+}
+
+names(dfSBF) <- namesSBF
+
+write.csv(dfSBF,"SolveBF.csv", row.names = FALSE)
+
+
+#num <- df2["Номер вектора"][,1][i]
+#  w <- df2["Целевой вес"][,1][i]
+#  vectr <- as.numeric(as.vector(df1[num,]))
+  
+#cat("Num = ", num, " W = ", w, " V: ", vectr, "\n")
+#ans <- knapsack(vectr, w, 24)
+#ans
+
+
+
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+dfSBF
+
+intToBits(ans[1])
+num <- df2["Номер вектора"][,1][i]
+as.numeric(as.vector(df1[3,]))
+
+
+mat <- matrix(, nrow = 0, ncol = 4)
+
+mat <- rbind(mat, c(0, 1, 2, 3))
+mat <- rbind(mat, c(2, 3, 2, 13))
+mat
+
+mat[1,]
+#print(length(q))
+
+```
+
+5. Решить задачу при помощи генетического алгоритма. Условия прекращения работы: нулевое значение фитнесс-функции, отсутствие улучшения значения фитнесс-функции на последних двух итерациях, превышение времени работы алгоритма полного перебора (для этого же экземпляра задачи) в 2 раза и более. Результаты решения заносить в таблицу:
+
+```{r}
+
+library("GA")
+
+fitness <- function(X, w, v_c){
+  
+  #q <- intToBits(X)
+  #print(X)
+  sum <- 0
+    
+  for(j in 1:24){
+      
+    if(X[j] == 1){
+        
+      sum <- sum + v_c[j]
+        
+    }
+      
+  }
+  return(abs(w - sum))
+}
+
+
+f <- function(X) return(fitness(X, df2["Целевой вес"][,1][2], df1[2,]))
+
+
+start_time <- Sys.time()
+
+GA <- ga(type = "binary", crossover=gabin_uCrossover, fitness = f,  popSize =100, nBits=24, pcrossover =0.8, elitism  = 0.01, pmutation =0.01, run =5, maxiter=300)
+
+end_time <- Sys.time()
+
+print(paste("Time: ", end_time - start_time))
+
+summary(GA)
+
+GA@suggestions
+
+```
+
+```{python}
+
+def f2(X):
+  print(X)
+
+```
+
+
+```{r}
+
+library(reticulate)
+geneticalgorithm2 <- import("geneticalgorithm2")
+
+builtins <- import_builtins()
+builtins$print('foo')
+
+#py_call(f(1))
+
+```
+
+
+```{r}
+
+#setwd("E:/prazia/univer/DataScience/Lab6")
+Sys.setlocale("LC_CTYPE", "Russian")
+SVGA <- read.csv("E:/prazia/VS_PY/BioALg/BioALg/SolveKS550.csv", fileEncoding= "utf-8")
+
+SVGA
+
+amnt <- 0
+
+
+
+for(i in 1:350){
+  
+  if(SVGA["Причина.остановки.алгоритма"][i,] == 2)
+    amnt <- amnt + 1
+  
+  if(mod(i, 50) == 0){
+    cat("Perc = ", (amnt * 100)/50, "% \n")
+    amnt <- 0
+  }
+  
+}
+
+for(i in 1:350){
+  
+  amnt <- amnt + SVGA["Время.работы.алгортима"][i,]
+  
+  if(mod(i, 50) == 0){
+    cat("Mean time = ", amnt/50, "s \n")
+    amnt <- 0
+  }
+  
+}
+
+
+
+
+amnt
+
+```
+
+```{r}
+
+SVBF <- read.csv("E:/prazia/VS_PY/BioALg/BioALg/SolveBF550.csv", fileEncoding= "utf-8")
+
+SVBF
+
+for(i in 1:350){
+  
+  amnt <- amnt + SVBF["Время.нахождения.первого.решения"][i,]
+  
+  if(mod(i, 50) == 0){
+    cat("Mn 1 = ", amnt/50, "s \n")
+    amnt <- 0
+  }
+  
+}
+
+cat("\n")
+
+for(i in 1:350){
+  
+  amnt <- amnt + SVBF["Время.нахождения.всех.решений"][i,]
+  
+  
+  if(mod(i, 50) == 0){
+    cat("Mn 2 = ", amnt/50, "s \n")
+    amnt <- 0
+  }
+  
+}
+
+
+```
+
+```{r}
+
+vec <- c()
+
+for(i in 1:350){
+  
+  vec <- c(vec, SVBF["Время.нахождения.первого.решения"][i,])
+  
+  if(mod(i, 50) == 0){
+    cat("Dis 1 = ", var(vec), "\n")
+    vec <- c()
+  }
+  
+}
+
+cat("\n")
+vec <- c()
+
+for(i in 1:350){
+  
+  vec <- c(vec, SVBF["Время.нахождения.всех.решений"][i,])
+  
+  if(mod(i, 50) == 0){
+    #print(vec)
+    cat("Dis 2 = ", var(vec), "\n")
+    vec <- c()
+  }
+  
+}
+
+cat("\n")
+vec <- c()
+
+for(i in 1:350){
+  
+  vec <- c(vec, SVGA["Время.работы.алгортима"][i,])
+  
+  if(mod(i, 50) == 0){
+    cat("Dis 3 = ", var(vec), "\n")
+    vec <- c()
+  }
+  
+}
+
+
+```
+
+```{r}
+
+vec <- c()
+
+
+tm1BF <- c()
+tmBF <- c()
+tmGA <- c()
+
+for(i in 1:350){
+  
+  vec <- c(vec, SVBF["Время.нахождения.первого.решения"][i,])
+  
+  if(mod(i, 50) == 0){
+    cat("SD 1 = ", sd(vec), "\n")
+    tm1BF <- c(tm1BF, sd(vec))
+    vec <- c()
+  }
+  
+}
+
+cat("\n")
+vec <- c()
+
+for(i in 1:350){
+  
+  vec <- c(vec, SVBF["Время.нахождения.всех.решений"][i,])
+  
+  if(mod(i, 50) == 0){
+    #print(vec)
+    cat("SD 2 = ", sd(vec), "\n")
+    tmBF <- c(tmBF, sd(vec))
+    vec <- c()
+  }
+  
+}
+
+cat("\n")
+vec <- c()
+
+for(i in 1:350){
+  
+  vec <- c(vec, SVGA["Время.работы.алгортима"][i,])
+  
+  if(mod(i, 50) == 0){
+    cat("SD 3 = ", sd(vec), "\n")
+    tmGA <- c(tmGA, sd(vec))
+    vec <- c()
+  }
+  
+}
+
+tm1BF
+tmBF 
+tmGA 
+
+
+
+```
+
+
+```{r}
+
+
+amnt <- 0
+
+vec1 <- c()
+
+for(i in 1:350){
+  
+  if(SVGA["Причина.остановки.алгоритма"][i,] == 2)
+    amnt <- amnt + 1
+  
+  if(mod(i, 50) == 0){
+    cat("Perc = ", (amnt * 100)/50, "% \n")
+    vec1 <- c(vec1, (amnt * 100)/50)
+    amnt <- 0
+  }
+  
+}
+
+vec2 <- c()
+
+for(i in seq(from=0.8, to=1.4, by=0.1))
+{
+  vec2 <- c(vec2, i)
+}
+
+#ggplot() + 
+
+plot(x=vec2, y=vec1, xlab="Иттерация amax", ylab="Доля %")
+lines(x=vec2, y=vec1)
+ 
+
+```
+
+
+```{r}
+
+
+library("ggplot2")
+
+vec2 <- c()
+
+for(i in seq(from=0.8, to=1.4, by=0.1))
+{
+  vec2 <- c(vec2, i)
+}
+
+vecGA <- c()
+
+for(i in 1:350){
+  
+  amnt <- amnt + SVGA["Время.работы.алгортима"][i,]
+  
+  if(mod(i, 50) == 0){
+    cat("Mn 1 = ", amnt/50, "s \n")
+    
+    vecGA <- c(vecGA, amnt/50)
+    amnt <- 0
+  }
+  
+}
+
+vec2
+vec1
+
+df <- data.frame("vec2" = vec2, "vecGA" = vecGA)
+
+
+ggplot(df, aes(x = vec2, y = vecGA)) + geom_line() +geom_point()+ geom_errorbar(aes(ymin=vecGA-tmGA, ymax=vecGA+tmGA), width=.01,       position=position_dodge(0.05)) + labs(x="Иттерация amax", y="Среднее время, s")
+
+plot(x=vec2, y=vecGA, xlab="Иттерация amax", ylab="Среднее время, s")
+arrows(vec2, tmBF, vec2, tmBF, length=0.05, angle=90, code=3)
+lines(x=vec2, y=vecGA)
+
+#lines(x=tm1BF) 
+#lines(x=tmBF )
+#lines(x=tmGA)
+
+```
+
+```{r}
+
+vec11 <- c()
+vec12 <- c()
+
+for(i in 1:350){
+  
+  amnt <- amnt + SVBF["Время.нахождения.первого.решения"][i,]
+  
+  if(mod(i, 50) == 0){
+    cat("Mn 1 = ", amnt/50, "s \n")
+    
+    vec11 <- c(vec11, amnt/50)
+    amnt <- 0
+  }
+  
+}
+
+cat("\n")
+
+for(i in 1:350){
+  
+  amnt <- amnt + SVBF["Время.нахождения.всех.решений"][i,]
+  
+  
+  if(mod(i, 50) == 0){
+    cat("Mn 2 = ", amnt/50, "s \n")
+    
+    vec12 <- c(vec12, amnt/50)
+    amnt <- 0
+  }
+  
+}
+
+
+df <- data.frame("vec2" = vec2, "vec11" = vec11)
+
+ggplot(df, aes(x = vec2, y = vec11)) + geom_line() +geom_point()+ geom_errorbar(aes(ymin=vec11-tm1BF, ymax=vec11+tm1BF), width=.01,       position=position_dodge(0.05)) + labs(x="Иттерация amax", y="Среднее время, s")
+
+
+
+df <- data.frame("vec2" = vec2, "vec12" = vec12)
+
+ggplot(df, aes(x = vec2, y = vec12)) + geom_line() +geom_point()+ geom_errorbar(aes(ymin=vec12-tmBF, ymax=vec12+tmBF), width=.01,       position=position_dodge(0.05)) + labs(x="Иттерация amax", y="Среднее время, s")
+
+
+
+plot(x=vec2, y=vec11, xlab="Иттерация amax", ylab="Среднее время, s")
+lines(x=vec2, y=vec11)
+
+plot(x=vec2, y=vec12, xlab="Иттерация amax", ylab="Среднее время, s")
+lines(x=vec2, y=vec12)
+
+
+```
+
+
+```{r}
+
+vec = c(14657737, 4128321, 5203895, 1761448, 1346866, 11991021, 4023194, 5238178, 13967409, 8447745, 7625459, 716494, 6965136, 13750739, 10300096, 7183231, 13786547, 2843406, 11450831, 6782088, 7367210, 42238, 655079, 1882354, 11618946, 4675703, 10185753, 7722676, 7909799, 3275793, 1811596, 1169288, 10429445, 1231063, 5395706, 2726029, 4205703, 5505675, 2016378, 788959, 4846473, 764666, 6580038, 7787031, 6584127, 9069700, 4567242, 5938428, 2146614, 2279651, 2908823, 8042897, 6646898, 7168023, 5578599, 3616459, 963086, 5999883, 734103, 1680304, 1040586, 6001887, 4838805, 2712460, 3542036, 1403332, 4601117, 751107, 3427681, 4922670, 1306562, 3542801, 1676487, 2906023, 1514806, 4013815, 2276450, 362276, 2379693, 1305807, 923024, 439600, 725037, 2030643, 2116366, 1941851, 1902364, 1489818, 938277, 438641, 513696, 1259615, 312510, 128880, 358144, 566354, 121893, 216269, 32280, 4421)
+
+
+vec = sort(vec)
+
+
+plot(vec)
+lines(x=vec)
+
+```
+```{r}
+
+vec2 = c(14220493, 2770513, 14743617, 3714087, 14703192, 15940877, 4224904, 12423542, 8939154, 787472, 4573248, 2986643, 4536920, 9067275, 13775722, 13874961, 15661024, 1146957, 7612942, 3003631, 12421488, 4034210, 12752211, 16131809, 11669240, 4529357, 9372504, 2132950, 4855802, 16021064, 12192898, 1978674, 10636784, 1358667, 15316050, 10952682, 8768827, 2573504, 10405749, 9560492, 12573560, 13167126, 7069134, 9998553, 11823051, 7839108, 7517378, 3389570, 10876459, 15027011, 8633050, 8108291, 11868094, 13059999, 3823625, 8874760, 13552442, 13602947, 14619543, 12847439, 6495811, 3060332, 3238500, 14090641, 9068000, 6298388, 12348703, 5850859, 6895240, 8392599, 5991364, 10028481, 9976724, 13266586, 4049735, 6197408, 3627374, 4793033, 7118808, 6471435, 10956691, 9692147, 5210691, 14504257, 15155713, 3698037, 7670800, 5038741, 3198720, 8398743, 4965287, 11123384, 3086433, 8576365, 16130464, 8546582, 11091752, 11069269, 14402297, 7403499)
+
+plot(vec2)
+lines(x=vec2)
+
+```
+
+
+
+
+
+
+
+
+
